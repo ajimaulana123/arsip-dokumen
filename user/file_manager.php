@@ -7,12 +7,31 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] != 'user') {
 
 $uploadDir = '../uploads/'; // Directory for uploaded files
 
-// Periksa apakah folder ada
-if (is_dir($uploadDir)) {
-    $files = scandir($uploadDir); // Get list of files and folders
-} else {
-    $files = []; // Set sebagai array kosong jika folder tidak ditemukan
+// Buat folder jika belum ada
+if (!is_dir($uploadDir)) {
+    mkdir($uploadDir, 0777, true);
 }
+
+// Proses unggah file
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
+    $file = $_FILES['file'];
+    $fileName = basename($file['name']);
+    $targetPath = $uploadDir . $fileName;
+
+    // Validasi jika file sudah ada
+    if (file_exists($targetPath)) {
+        $_SESSION['error'] = "File dengan nama yang sama sudah ada.";
+    } elseif (move_uploaded_file($file['tmp_name'], $targetPath)) {
+        $_SESSION['message'] = "File berhasil diunggah.";
+    } else {
+        $_SESSION['error'] = "Terjadi kesalahan saat mengunggah file.";
+    }
+    header("Location: file_manager.php");
+    exit();
+}
+
+// Ambil daftar file dari folder
+$files = is_dir($uploadDir) ? scandir($uploadDir) : [];
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -79,6 +98,12 @@ if (is_dir($uploadDir)) {
                 }
                 ?>
                 <h1>File Manager</h1>
+                <form action="" method="POST" enctype="multipart/form-data" class="mb-4">
+                    <div class="input-group">
+                        <input type="file" name="file" class="form-control" required>
+                        <button class="btn btn-primary" type="submit"><i class="fas fa-upload"></i> Unggah</button>
+                    </div>
+                </form>
                 <table class="table table-dark table-striped">
                     <thead>
                         <tr>
