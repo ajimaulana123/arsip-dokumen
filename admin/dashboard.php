@@ -79,7 +79,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST['search'])) {
                         FROM users 
                         WHERE LOWER(username) LIKE LOWER('%$searchQuery%') 
                         OR LOWER(role) LIKE LOWER('%$searchQuery%')
-                        OR LOWER(email) LIKE LOWER('%$searchQuery%')
+                        OR LOWER(name) LIKE LOWER('%$searchQuery%')  
+                        OR LOWER(nik) LIKE LOWER('%$searchQuery%')
+                        OR LOWER(jabatan) LIKE LOWER('%$searchQuery%')
                         ORDER BY created_at DESC
                         LIMIT 5";
     $result_users = mysqli_query($koneksi, $sql_search_users);
