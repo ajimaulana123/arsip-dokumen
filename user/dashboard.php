@@ -28,19 +28,22 @@ function countFiles($dir) {
     return $total_files;
 }
 
-// Ganti dengan perhitungan langsung dari tabel files
-$sql_count_files = "SELECT COUNT(*) as total FROM files WHERE user_id = ?";
-$stmt = mysqli_prepare($koneksi, $sql_count_files);
-if ($stmt) {
-    mysqli_stmt_bind_param($stmt, "i", $user_data['id']);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
+// Cek apakah kolom user_id ada
+$check_column = mysqli_query($koneksi, "SHOW COLUMNS FROM files LIKE 'user_id'");
+if (mysqli_num_rows($check_column) == 0) {
+    // Tambah kolom user_id jika belum ada
+    mysqli_query($koneksi, "ALTER TABLE files ADD COLUMN user_id INT");
+}
+
+// Hitung jumlah file
+$sql_count_files = "SELECT COUNT(*) as total FROM files";
+$result = mysqli_query($koneksi, $sql_count_files);
+if ($result) {
     $row = mysqli_fetch_assoc($result);
     $jumlah_file = $row['total'];
-    mysqli_stmt_close($stmt);
 } else {
     $jumlah_file = 0;
-    error_log("Error preparing statement: " . mysqli_error($koneksi));
+    error_log("Error in query: " . mysqli_error($koneksi));
 }
 
 // Statistik dasar dengan error handling
