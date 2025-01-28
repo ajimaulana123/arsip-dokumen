@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['username'])) {
-    echo "<script>alert('Harap login terlebih dahulu!'); window.location.href='login.php';</script>";
+    echo "<script>alert('Harap login terlebih dahulu!'); window.location.href='../index.php';</script>";
     exit();
 }
 include '../includes/db.php';
