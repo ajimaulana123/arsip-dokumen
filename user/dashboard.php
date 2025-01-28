@@ -79,7 +79,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST['search'])) {
                         FROM users 
                         WHERE LOWER(username) LIKE LOWER('%$searchQuery%') 
                         OR LOWER(role) LIKE LOWER('%$searchQuery%')
-                        OR LOWER(email) LIKE LOWER('%$searchQuery%')
+                        OR LOWER(name) LIKE LOWER('%$searchQuery%')  
+                        OR LOWER(nik) LIKE LOWER('%$searchQuery%')
+                        OR LOWER(jabatan) LIKE LOWER('%$searchQuery%')
                         ORDER BY created_at DESC
                         LIMIT 5";
     $result_users = mysqli_query($koneksi, $sql_search_users);
@@ -298,9 +300,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST['search'])) {
                                                         <h6 class="mb-1"><?php echo htmlspecialchars($user['username']); ?></h6>
                                                         <p class="mb-1">
                                                             Role: <?php echo htmlspecialchars($user['role']); ?>
-                                                            <?php if(!empty($user['email'])): ?>
-                                                                <br>Email: <?php echo htmlspecialchars($user['email']); ?>
-                                                            <?php endif; ?>
                                                         </p>
                                                         <small>
                                                             Dibuat: <?php echo htmlspecialchars($user['created_at']); ?>
@@ -421,9 +420,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST['search'])) {
                                             <h6 class="mb-1"><?php echo htmlspecialchars($user['username']); ?></h6>
                                             <p class="mb-1">
                                                 Role: <?php echo htmlspecialchars($user['role']); ?>
-                                                <?php if(!empty($user['email'])): ?>
-                                                    <br>Email: <?php echo htmlspecialchars($user['email']); ?>
-                                                <?php endif; ?>
                                             </p>
                                             <small>
                                                 Dibuat: <?php echo htmlspecialchars($user['created_at']); ?>
