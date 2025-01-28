@@ -354,13 +354,13 @@ $result_folders = mysqli_query($koneksi, $sql_folders);
                             <a href="dashboard.php" class="nav-link"><i class="bi bi-house-door me-2"></i> Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a href="Users.php" class="nav-link"><i class="bi bi-person me-2"></i> Users</a>
+                            <a href="users.php" class="nav-link"><i class="bi bi-person me-2"></i> Users</a>
                         </li>
                         <li class="nav-item">
-                            <a href="Folder.php" class="nav-link active"><i class="bi bi-folder me-2"></i> Folder</a>
+                            <a href="folder.php" class="nav-link active"><i class="bi bi-folder me-2"></i> Folder</a>
                         </li>
                         <li class="nav-item">
-                            <a href="File.php" class="nav-link"><i class="bi bi-file-earmark-text me-2"></i> File</a>
+                            <a href="file.php" class="nav-link"><i class="bi bi-file-earmark-text me-2"></i> File</a>
                         </li>
                     </ul>
                     <div class="mt-4">

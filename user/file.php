@@ -133,9 +133,9 @@ $id = isset($_GET['id']) ? $_GET['id'] : '';
                 <h3 class="text-center">ARSIP</h3>
                 <ul class="nav flex-column mt-4">
                     <li class="nav-item"><a href="dashboard.php" class="nav-link"><i class="bi bi-house-door me-2"></i> Dashboard</a></li>
-                    <li class="nav-item"><a href="Users.php" class="nav-link"><i class="bi bi-person me-2"></i> Users</a></li>
-                    <li class="nav-item"><a href="Folder.php" class="nav-link"><i class="bi bi-folder me-2"></i> Folder</a></li>
-                    <li class="nav-item"><a href="File.php" class="nav-link active"><i class="bi bi-file-earmark-text me-2"></i> File</a></li>
+                    <li class="nav-item"><a href="users.php" class="nav-link"><i class="bi bi-person me-2"></i> Users</a></li>
+                    <li class="nav-item"><a href="folder.php" class="nav-link"><i class="bi bi-folder me-2"></i> Folder</a></li>
+                    <li class="nav-item"><a href="file.php" class="nav-link active"><i class="bi bi-file-earmark-text me-2"></i> File</a></li>
                 </ul>
                 <div class="mt-4"><a href="../logout.php" class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></div>
             </div>
