@@ -137,7 +137,7 @@ $id = isset($_GET['id']) ? $_GET['id'] : '';
                     <li class="nav-item"><a href="Folder.php" class="nav-link"><i class="bi bi-folder me-2"></i> Folder</a></li>
                     <li class="nav-item"><a href="File.php" class="nav-link active"><i class="bi bi-file-earmark-text me-2"></i> File</a></li>
                 </ul>
-                <div class="mt-4"><a href="logout.php" class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></div>
+                <div class="mt-4"><a href="../logout.php" class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></div>
             </div>
         </nav>
 

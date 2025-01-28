@@ -133,7 +133,7 @@ $result_folders = mysqli_query($koneksi, $sql_folders);
                         </li>
                     </ul>
                     <div class="mt-4">
-                        <a href="logout.php" class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2"></i> Logout</a>
+                        <a href="../logout.php" class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2"></i> Logout</a>
                     </div>
                 </div>
             </nav>
