@@ -259,13 +259,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST['search'])) {
                             <a href="dashboard.php" class="nav-link active"><i class="bi bi-house-door"></i> Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a href="Users.php" class="nav-link"><i class="bi bi-person"></i> Users</a>
+                            <a href="users.php" class="nav-link"><i class="bi bi-person"></i> Users</a>
                         </li>
                         <li class="nav-item">
-                            <a href="Folder.php" class="nav-link"><i class="bi bi-folder"></i> Folder</a>
+                            <a href="folder.php" class="nav-link"><i class="bi bi-folder"></i> Folder</a>
                         </li>
                         <li class="nav-item">
-                            <a href="File.php" class="nav-link"><i class="bi bi-file-earmark-text"></i> File</a>
+                            <a href="file.php" class="nav-link"><i class="bi bi-file-earmark-text"></i> File</a>
                         </li>
                     </ul>
                     <div class="mt-4">
