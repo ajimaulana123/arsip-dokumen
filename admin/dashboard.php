@@ -28,21 +28,15 @@ function countFiles($dir) {
     return $total_files;
 }
 
-// Update perhitungan jumlah file
-$upload_dir = '../uploads';
-$jumlah_file = countFiles($upload_dir);
-
 // Query untuk mendapatkan jumlah file dari database
 $sql_files = "SELECT COUNT(*) as total FROM files";
 $result_files = mysqli_query($koneksi, $sql_files);
 if ($result_files) {
-    $db_files = mysqli_fetch_assoc($result_files)['total'];
-    // Bandingkan jumlah file di folder dengan database
-    if ($db_files != $jumlah_file) {
-        // Update database jika ada perbedaan
-        $sql_sync = "UPDATE files SET total_files = $jumlah_file WHERE 1";
-        mysqli_query($koneksi, $sql_sync);
-    }
+    $row = mysqli_fetch_assoc($result_files);
+    $jumlah_file = $row['total'];
+} else {
+    $jumlah_file = 0;
+    error_log("Error in query: " . mysqli_error($koneksi));
 }
 
 // Statistik dasar dengan error handling
