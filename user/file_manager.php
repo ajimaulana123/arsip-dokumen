@@ -125,7 +125,6 @@ $files = is_dir($uploadDir) ? scandir($uploadDir) : [];
                                     echo "<td>" . $fileSize . " KB</td>";
                                     echo "<td>";
                                     echo "<a href='" . htmlspecialchars($uploadDir . $file) . "' download class='btn btn-sm btn-primary'><i class='fas fa-download'></i> Unduh</a> ";
-                                    echo "<a href='hapus_file.php?file=" . urlencode($file) . "' class='btn btn-sm btn-danger' onclick=\"return confirm('Apakah Anda yakin ingin menghapus file ini?')\"><i class='fas fa-trash'></i> Hapus</a>";
                                     echo "</td>";
                                     echo "</tr>";
                                 }

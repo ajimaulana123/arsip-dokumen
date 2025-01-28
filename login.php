@@ -1,5 +1,7 @@
 <?php
 session_start();
+include 'includes/db.php';
+
 if (isset($_SESSION['username'])) {
     if ($_SESSION['role'] === 'admin') {
         header("Location: admin/dashboard.php");
@@ -7,6 +9,50 @@ if (isset($_SESSION['username'])) {
         header("Location: user/dashboard.php");
     }
     exit;
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    $sql = "SELECT * FROM users WHERE username = ?";
+    $stmt = mysqli_prepare($koneksi, $sql);
+    mysqli_stmt_bind_param($stmt, "s", $username);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if ($row = mysqli_fetch_assoc($result)) {
+        if (password_verify($password, $row['password'])) {
+            // Set session
+            $_SESSION['user_id'] = $row['id'];
+            $_SESSION['username'] = $row['username'];
+            $_SESSION['role'] = $row['role'];
+
+            // Catat aktivitas login
+            $user_id = $row['id'];
+            
+            // Update last_login di tabel users
+            $update_login = "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?";
+            $stmt_update = mysqli_prepare($koneksi, $update_login);
+            mysqli_stmt_bind_param($stmt_update, "i", $user_id);
+            mysqli_stmt_execute($stmt_update);
+
+            // Catat di login_history
+            $insert_history = "INSERT INTO login_history (user_id, username) VALUES (?, ?)";
+            $stmt_history = mysqli_prepare($koneksi, $insert_history);
+            mysqli_stmt_bind_param($stmt_history, "is", $user_id, $username);
+            mysqli_stmt_execute($stmt_history);
+
+            // Redirect berdasarkan role
+            if ($row['role'] == 'admin') {
+                header("Location: admin/dashboard.php");
+            } else {
+                header("Location: user/dashboard.php");
+            }
+            exit();
+        }
+    }
+    $error = "Username atau password salah";
 }
 ?>
 <!DOCTYPE html>
@@ -156,14 +202,14 @@ if (isset($_SESSION['username'])) {
 <body>
     <div class="login-container">
         <h2>SISTEM ARSIP DOKUMEN</h2>
-        <form method="POST" action="proses_login.php">
+        <form method="POST" action="login.php">
             <input type="text" name="username" class="input-field" placeholder="Username" required><br>
             <input type="password" name="password" class="input-field" placeholder="Password" required><br>
             <button type="submit" class="login-button">Login</button>
         </form>
-        <?php if (isset($error_message)) { ?>
+        <?php if (isset($error)) { ?>
             <div style="color: red; margin-top: 10px;">
-                <?php echo $error_message; ?>
+                <?php echo $error; ?>
             </div>
         <?php } ?>
         <div class="footer-text">

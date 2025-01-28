@@ -131,7 +131,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         <label for="role" class="form-label">Role</label>
                                         <select class="form-select form-select-sm" name="role" id="role" required>
                                             <option value="user">User</option>
-                                            <option value="admin">Admin</option>
                                         </select>
                                     </div>
                                 </div>

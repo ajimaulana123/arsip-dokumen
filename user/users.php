@@ -9,8 +9,6 @@ include '../includes/db.php';
 if (!$koneksi) {
   die("Koneksi database GAGAL: " . mysqli_connect_error());
 }
-
-// Mengubah query untuk menampilkan hanya user yang memiliki role 'user'
 $sql = "SELECT id, username, name, nik, jabatan, role FROM users WHERE role = 'user'";
 $result = mysqli_query($koneksi, $sql);
 
@@ -90,7 +88,6 @@ if (!$result) {
                                 <th>NIK</th>
                                 <th>Jabatan</th>
                                 <th>Role</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -106,10 +103,6 @@ if (!$result) {
                                 echo "<td>" . $row['nik'] . "</td>";
                                 echo "<td>" . $row['jabatan'] . "</td>";
                                 echo "<td>" . $row['role'] . "</td>";
-                                echo "<td>";
-                                echo "<a href='edit_user.php?id=" . $row['id'] . "' class='btn btn-sm btn-warning me-1'>Edit</a>";
-                                echo "<a href='hapus_user.php?id=" . $row['id'] . "' class='btn btn-sm btn-danger' onclick=\"return confirm('Apakah Anda yakin ingin menghapus user ini?')\">Hapus</a>";
-                                echo "</td>";
                                 echo "</tr>";
                                 $no++;
                               }

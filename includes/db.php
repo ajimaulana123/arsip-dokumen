@@ -11,4 +11,7 @@ $koneksi = mysqli_connect($host, $username, $password, $dbname, $port);
 if (!$koneksi) {
     die("Koneksi gagal: " . mysqli_connect_error());
 }
+
+// Set charset ke UTF-8
+mysqli_set_charset($koneksi, "utf8");
 ?>
