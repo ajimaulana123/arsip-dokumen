@@ -1,20 +1,18 @@
-# Gunakan image PHP versi terbaru
+# Dockerfile
 FROM php:8.1-apache
 
-# Set working directory
-WORKDIR /var/www/html
-
-# Salin seluruh file aplikasi ke dalam container
-COPY . /var/www/html/
-
-# Install ekstensi PHP yang diperlukan (misalnya, untuk MySQL)
+# Install ekstensi MySQL dan dependencies
 RUN docker-php-ext-install mysqli pdo pdo_mysql
 
-# Set permission agar Apache dapat mengakses file
-RUN chown -R www-data:www-data /var/www/html
+# Copy aplikasi
+COPY . /var/www/html/
 
-# Ekspose port 80 untuk akses web
+# Set permission
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html
+
+# Expose port
 EXPOSE 80
 
-# Jalankan Apache di foreground
+# Start Apache
 CMD ["apache2-foreground"]
