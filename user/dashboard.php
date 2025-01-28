@@ -28,20 +28,39 @@ function countFiles($dir) {
     return $total_files;
 }
 
+// Tambahkan pengecekan dan pembuatan kolom total_files
+$check_total_files_column = mysqli_query($koneksi, "SHOW COLUMNS FROM files LIKE 'total_files'");
+if (mysqli_num_rows($check_total_files_column) == 0) {
+    // Tambahkan kolom total_files jika belum ada
+    $alter_table = "ALTER TABLE files ADD COLUMN total_files INT DEFAULT 0";
+    if (!mysqli_query($koneksi, $alter_table)) {
+        error_log("Error adding total_files column: " . mysqli_error($koneksi));
+    }
+}
+
 // Update perhitungan jumlah file
 $upload_dir = '../uploads';
 $jumlah_file = countFiles($upload_dir);
 
-// Query untuk mendapatkan jumlah file dari database
+// Query untuk mendapatkan jumlah file dari database dengan error handling
 $sql_files = "SELECT COUNT(*) as total FROM files";
 $result_files = mysqli_query($koneksi, $sql_files);
 if ($result_files) {
     $db_files = mysqli_fetch_assoc($result_files)['total'];
     // Bandingkan jumlah file di folder dengan database
     if ($db_files != $jumlah_file) {
-        // Update database jika ada perbedaan
-        $sql_sync = "UPDATE files SET total_files = $jumlah_file WHERE 1";
-        mysqli_query($koneksi, $sql_sync);
+        // Update database dengan prepared statement
+        $update_sql = "UPDATE files SET total_files = ?";
+        $stmt = mysqli_prepare($koneksi, $update_sql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "i", $jumlah_file);
+            if (!mysqli_stmt_execute($stmt)) {
+                error_log("Error updating total_files: " . mysqli_stmt_error($stmt));
+            }
+            mysqli_stmt_close($stmt);
+        } else {
+            error_log("Error preparing total_files update: " . mysqli_error($koneksi));
+        }
     }
 }
 
