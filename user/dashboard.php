@@ -7,16 +7,49 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] != 'user') {
 
 include '../includes/db.php';
 
-// Ganti dengan query sederhana untuk menghitung jumlah file
-$sql_count_files = "SELECT COUNT(*) as total FROM files";
-$result = mysqli_query($koneksi, $sql_count_files);
+// Ambil user_id dari database berdasarkan username yang login
+$username = $_SESSION['username'];
+$user_query = mysqli_query($koneksi, "SELECT id FROM users WHERE username = '$username'");
+$user_data = mysqli_fetch_assoc($user_query);
+$user_id = $user_data['id'];
+
+// Fungsi untuk menghitung file di folder uploads
+function countFilesInUploads($dir) {
+    $total_files = 0;
+    
+    if (is_dir($dir)) {
+        $files = scandir($dir);
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+            if ($file != '.' && $file != '..') {
+                if (is_file($path)) {
+                    $total_files++;
+                } elseif (is_dir($path)) {
+                    $total_files += countFilesInUploads($path);
+                }
+            }
+        }
+    }
+    
+    return $total_files;
+}
+
+// Ganti dengan ini untuk menghitung semua file di folder uploads
+$upload_dir = '../uploads';
+$jumlah_file_folder = is_dir($upload_dir) ? countFilesInUploads($upload_dir) : 0;
+
+// Hitung total file dari database (semua user)
+$sql_files = "SELECT COUNT(*) as total FROM files";
+$result = mysqli_query($koneksi, $sql_files);
 if ($result) {
     $row = mysqli_fetch_assoc($result);
-    $jumlah_file = $row['total'];
+    $jumlah_file_db = $row['total'];
 } else {
-    $jumlah_file = 0;
-    error_log("Error in query: " . mysqli_error($koneksi));
+    $jumlah_file_db = 0;
 }
+
+// Gunakan jumlah file terbesar antara folder dan database
+$jumlah_file = max($jumlah_file_folder, $jumlah_file_db);
 
 // Statistik dasar dengan error handling
 $jumlah_user = 0;

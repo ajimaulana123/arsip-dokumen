@@ -28,16 +28,42 @@ function countFiles($dir) {
     return $total_files;
 }
 
-// Query untuk mendapatkan jumlah file dari database
+// Fungsi untuk menghitung file di folder uploads
+function countFilesInUploads($dir) {
+    $total_files = 0;
+    
+    if (is_dir($dir)) {
+        $files = scandir($dir);
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+            if ($file != '.' && $file != '..') {
+                if (is_file($path)) {
+                    $total_files++;
+                } elseif (is_dir($path)) {
+                    $total_files += countFilesInUploads($path);
+                }
+            }
+        }
+    }
+    
+    return $total_files;
+}
+
+// Hitung file dari database
 $sql_files = "SELECT COUNT(*) as total FROM files";
 $result_files = mysqli_query($koneksi, $sql_files);
+$db_files = 0;
 if ($result_files) {
     $row = mysqli_fetch_assoc($result_files);
-    $jumlah_file = $row['total'];
-} else {
-    $jumlah_file = 0;
-    error_log("Error in query: " . mysqli_error($koneksi));
+    $db_files = $row['total'];
 }
+
+// Hitung file dari folder uploads
+$upload_dir = '../uploads';
+$actual_files = countFilesInUploads($upload_dir);
+
+// Gunakan jumlah file aktual dari folder
+$jumlah_file = $actual_files;
 
 // Statistik dasar dengan error handling
 $jumlah_user = 0;
