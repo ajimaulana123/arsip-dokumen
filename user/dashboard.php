@@ -7,35 +7,7 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] != 'user') {
 
 include '../includes/db.php';
 
-// Tambahkan fungsi ini di bagian atas file setelah koneksi database
-function countFiles($dir) {
-    $total_files = 0;
-    
-    if (is_dir($dir)) {
-        $files = scandir($dir);
-        foreach ($files as $file) {
-            $path = $dir . '/' . $file;
-            if ($file != '.' && $file != '..') {
-                if (is_file($path)) {
-                    $total_files++;
-                } elseif (is_dir($path)) {
-                    $total_files += countFiles($path);
-                }
-            }
-        }
-    }
-    
-    return $total_files;
-}
-
-// Cek apakah kolom user_id ada
-$check_column = mysqli_query($koneksi, "SHOW COLUMNS FROM files LIKE 'user_id'");
-if (mysqli_num_rows($check_column) == 0) {
-    // Tambah kolom user_id jika belum ada
-    mysqli_query($koneksi, "ALTER TABLE files ADD COLUMN user_id INT");
-}
-
-// Hitung jumlah file
+// Ganti dengan query sederhana untuk menghitung jumlah file
 $sql_count_files = "SELECT COUNT(*) as total FROM files";
 $result = mysqli_query($koneksi, $sql_count_files);
 if ($result) {
