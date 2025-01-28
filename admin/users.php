@@ -1,19 +1,45 @@
 <?php
 session_start();
 if (!isset($_SESSION['username']) || $_SESSION['role'] != 'admin') {
-  header("Location: ../login.php");
-  exit();
+    header("Location: ../login.php");
+    exit();
 }
 
 include '../includes/db.php';
+
+// Periksa koneksi ke database
 if (!$koneksi) {
-  die("Koneksi database GAGAL: " . mysqli_connect_error());
+    die("Koneksi gagal: " . mysqli_connect_error());
 }
-$sql = "SELECT id, username, name, nik, jabatan, role FROM users";
-$result = mysqli_query($koneksi, $sql);
+
+// Logika pencarian
+$search = '';
+if (isset($_GET['search'])) {
+    $search = htmlspecialchars($_GET['search']);
+}
+
+// Ambil data dari tabel users dengan pencarian jika ada
+// Ambil data pencarian
+$searchQuery = '';
+if (isset($_GET['search'])) {
+    $searchQuery = mysqli_real_escape_string($koneksi, $_GET['search']);
+}
+
+// Query pencarian
+if (!empty($searchQuery)) {
+    $query = "SELECT * FROM users 
+              WHERE username LIKE '%$searchQuery%' 
+              OR name LIKE '%$searchQuery%' 
+              OR nik LIKE '%$searchQuery%' 
+              OR jabatan LIKE '%$searchQuery%' 
+              OR role LIKE '%$searchQuery%'";
+} else {
+    $query = "SELECT * FROM users";
+}
+$result = mysqli_query($koneksi, $query);
 
 if (!$result) {
-  die("Error dalam query: " . mysqli_error($koneksi));
+    die("Query gagal: " . mysqli_error($koneksi));
 }
 ?>
 
@@ -23,66 +49,122 @@ if (!$result) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data User</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="../assets/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
     <style>
         body {
-            background-color: #1e273a;
-            color: white;
+            background-color: #f8f9fa;
         }
+
         .sidebar {
-            background-color: #283149;
-            min-height: 100vh;
+            height: 100vh;
+            background-color: rgb(32, 38, 44);
+            color: white;
             padding-top: 20px;
         }
-        .sidebar .nav-link {
-          color: #adb5bd;
-        }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+
+        .sidebar a {
             color: white;
-            background-color: rgba(255, 255, 255, 0.1);
+            text-decoration: none;
+            padding: 10px 15px;
+            display: block;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
-        table {
-            background-color: #343a40;
+
+        .sidebar .nav-link {
+            color: #adb5bd;
         }
-        th, td {
-            border-color: #495057;
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .table th {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+        }
+
+        .table tbody tr:hover {
+            background-color: #d1ecf1;
+            transition: background-color 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: relative;
+                height: auto;
+                width: 100%;
+                display: block;
+            }
+
+            .content {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <nav class="col-md-3 col-lg-2 sidebar">
-                <a class="navbar-brand ms-3" href="#">
-                    <span class="fs-4 fw-bold">ARSIP</span>
-                </a>
-                <ul class="nav flex-column mt-4">
-                    <li class="nav-item">
-                        <a class="nav-link" href="dashboard.php"><i class="fas fa-tachometer-alt me-2"></i> Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="users.php"><i class="fas fa-users me-2"></i> User</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="file_manager.php"><i class="fas fa-file me-2"></i> File Manager</a>
-                    </li>
-                    <li class="nav-item mt-auto mb-3">
-                        <a class="nav-link logout text-danger" href="../logout.php"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
-                    </li>
-                </ul>
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar" id="sidebar">
+                <div class="position-sticky">
+                    <h3 class="text-center">ARSIP</h3>
+                    <ul class="nav flex-column mt-4">
+                        <li class="nav-item">
+                            <a href="dashboard.php" class="nav-link"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="users.php" class="nav-link active"><i class="bi bi-person me-2"></i> Users</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="folder.php" class="nav-link"><i class="bi bi-folder me-2"></i> Folder</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="file.php" class="nav-link"><i class="bi bi-file-earmark-text me-2"></i> File</a>
+                        </li>
+                    </ul>
+                    <div class="mt-4">
+                        <a href="logout.php" class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2"></i> Logout</a>
+                    </div>
+                </div>
             </nav>
+
+            <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-4">
                     <h1 class="h2">Data User</h1>
                 </div>
-                <a href="tambah_user.php" class="btn btn-primary mb-3">Tambah User</a>
+                <div class="d-flex mb-3">
+                    <a href="tambah_user.php" class="btn btn-primary me-2">
+                        <i class="bi bi-person-plus-fill me-2"></i> Tambah User
+                    </a>
+                    <form action="" method="GET" class="d-flex">
+                        <input type="text" name="search" class="form-control" placeholder="Cari user..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                        <button type="submit" class="btn btn-secondary ms-2">Cari</button>
+                    </form>
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-dark table-striped">
+                    
+                    <table class="table table-striped">
+                        
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>#</th>
                                 <th>Username</th>
                                 <th>Nama Lengkap</th>
                                 <th>NIK</th>
@@ -94,25 +176,24 @@ if (!$result) {
                         <tbody>
                             <?php
                             $no = 1;
-
-                            if ($result && mysqli_num_rows($result) > 0) {
-                              while ($row = mysqli_fetch_assoc($result)) {
-                                echo "<tr>";
-                                echo "<td>" . $no . "</td>";
-                                echo "<td>" . $row['username'] . "</td>";
-                                echo "<td>" . $row['name'] . "</td>";
-                                echo "<td>" . $row['nik'] . "</td>";
-                                echo "<td>" . $row['jabatan'] . "</td>";
-                                echo "<td>" . $row['role'] . "</td>";
-                                echo "<td>";
-                                echo "<a href='edit_user.php?id=" . $row['id'] . "' class='btn btn-sm btn-warning me-1'>Edit</a>";
-                                echo "<a href='hapus_user.php?id=" . $row['id'] . "' class='btn btn-sm btn-danger' onclick=\"return confirm('Apakah Anda yakin ingin menghapus user ini?')\">Hapus</a>";
-                                echo "</td>";
-                                echo "</tr>";
-                                $no++;
-                              }
+                            if (mysqli_num_rows($result) > 0) {
+                                while ($row = mysqli_fetch_assoc($result)) {
+                                    echo "<tr>";
+                                    echo "<td>" . $no . "</td>";
+                                    echo "<td>" . htmlspecialchars($row['username']) . "</td>";
+                                    echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+                                    echo "<td>" . htmlspecialchars($row['nik']) . "</td>";
+                                    echo "<td>" . htmlspecialchars($row['jabatan']) . "</td>";
+                                    echo "<td>" . htmlspecialchars($row['role']) . "</td>";
+                                    echo "<td>
+                                            <a href='edit_user.php?id=" . $row['id'] . "' class='btn btn-sm btn-warning me-1'><i class='bi bi-pencil-square'></i> Edit</a>
+                                            <a href='hapus_user.php?id=" . $row['id'] . "' class='btn btn-sm btn-danger' onclick=\"return confirm('Apakah Anda yakin ingin menghapus user ini?')\"><i class='bi bi-trash'></i> Hapus</a>
+                                          </td>";
+                                    echo "</tr>";
+                                    $no++;
+                                }
                             } else {
-                              echo "<tr><td colspan='7' class='text-center'>Tidak ada data user.</td></tr>";
+                                echo "<tr><td colspan='7' class='text-center'>Tidak ada data user.</td></tr>";
                             }
                             ?>
                         </tbody>
@@ -121,6 +202,7 @@ if (!$result) {
             </main>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
