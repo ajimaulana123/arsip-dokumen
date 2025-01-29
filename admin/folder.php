@@ -186,7 +186,20 @@ function editFolder($koneksi, $id) {
 function hapusFolder($koneksi, $id) {
     global $error_message, $success_message;
     
-    // Ambil nama folder sebelum dihapus
+    // Cek apakah folder memiliki file
+    $check_files = mysqli_prepare($koneksi, "SELECT COUNT(*) as file_count FROM files WHERE folder_id = ?");
+    mysqli_stmt_bind_param($check_files, "i", $id);
+    mysqli_stmt_execute($check_files);
+    $result = mysqli_stmt_get_result($check_files);
+    $file_count = mysqli_fetch_assoc($result)['file_count'];
+    mysqli_stmt_close($check_files);
+
+    if ($file_count > 0) {
+        $error_message = "Folder tidak dapat dihapus karena masih berisi file. Harap hapus semua file terlebih dahulu.";
+        return;
+    }
+    
+    // Jika tidak ada file, lanjutkan proses penghapusan
     $stmt_select = mysqli_prepare($koneksi, "SELECT folder_name FROM folders WHERE folder_id = ?");
     mysqli_stmt_bind_param($stmt_select, "i", $id);
     mysqli_stmt_execute($stmt_select);
@@ -199,14 +212,6 @@ function hapusFolder($koneksi, $id) {
         
         // Hapus folder fisik
         if (file_exists($folder_path)) {
-            // Hapus semua file dalam folder
-            $files = glob($folder_path . '/*');
-            foreach ($files as $file) {
-                if (is_file($file)) {
-                    unlink($file);
-                }
-            }
-            // Hapus folder
             if (!rmdir($folder_path)) {
                 $error_message = "Gagal menghapus folder fisik!";
                 return;
@@ -228,7 +233,7 @@ function hapusFolder($koneksi, $id) {
             header("Location: folder.php");
             exit();
         } else {
-            $error_message = "Gagal menghapus folder dari database: " . mysqli_error($koneksi);
+            $error_message = "Gagal menghapus folder!";
         }
         mysqli_stmt_close($stmt);
     } else {
@@ -341,6 +346,159 @@ $result_folders = mysqli_query($koneksi, $sql_folders);
             justify-content: center;
             gap: 5px;
         }
+
+        .folder-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .folder-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .folder-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .folder-content {
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .folder-icon {
+            font-size: 2.5rem;
+            color: #ffd700;
+        }
+
+        .folder-info {
+            flex: 1;
+        }
+
+        .folder-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .folder-description {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .folder-actions {
+            padding: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 5px;
+        }
+
+        .files-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .file-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .file-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .file-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .file-info {
+            text-align: center;
+        }
+
+        .file-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .file-type {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        #filePreviewContainer {
+            position: relative;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .zoom-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1060;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .zoom-controls button {
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .zoom-controls button:hover {
+            background: #e9ecef;
+            transform: scale(1.1);
+        }
+
+        .no-folders {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .download-btn {
+            background: #28a745 !important; /* Warna hijau untuk tombol download */
+            color: white !important;
+        }
+        
+        .download-btn:hover {
+            background: #218838 !important;
+            color: white !important;
+        }
     </style>
 </head>
 <body>
@@ -394,37 +552,42 @@ $result_folders = mysqli_query($koneksi, $sql_folders);
                 
                 </div>
 
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Nama Folder</th>
-                            <th>Deskripsi</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        if ($result_folders && mysqli_num_rows($result_folders) > 0) {
-                            $no = 1;
-                            while ($row = mysqli_fetch_assoc($result_folders)) {
-                                echo "<tr>";
-                                echo "<td>" . htmlspecialchars($no++) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['nama_folder']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['deskripsi']) . "</td>";
-                                echo "<td>";
-                                echo "<div class='btn-action'>"; // Wrap buttons in a container for better styling
-                                 echo "<a href='?action=edit&id=" . htmlspecialchars($row['folder_id']) . "' class='btn btn-warning btn-sm'><i class='fas fa-edit'></i> Edit</a>";
-                                 echo "<a href='?action=hapus&id=" . htmlspecialchars($row['folder_id']) . "' class='btn btn-danger btn-sm' onclick=\"return confirm('Apakah Anda yakin ingin menghapus folder ini?')\"><i class='fas fa-trash-alt'></i> Hapus</a>";
-                                 echo "</div>";
-                                echo "</tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='4' class='text-center'>Tidak ada data folder.</td></tr>";
+                <div class="folder-container">
+                    <?php
+                    if ($result_folders && mysqli_num_rows($result_folders) > 0) {
+                        while ($row = mysqli_fetch_assoc($result_folders)) {
+                            ?>
+                            <div class="folder-card" data-folder-id="<?php echo htmlspecialchars($row['folder_id']); ?>">
+                                <div class="folder-content" onclick="showFolderFiles(<?php echo htmlspecialchars($row['folder_id']); ?>, '<?php echo htmlspecialchars($row['nama_folder']); ?>')">
+                                    <div class="folder-icon">
+                                        <i class="bi bi-folder-fill"></i>
+                                    </div>
+                                    <div class="folder-info">
+                                        <div class="folder-name"><?php echo htmlspecialchars($row['nama_folder']); ?></div>
+                                        <div class="folder-description"><?php echo htmlspecialchars($row['deskripsi']); ?></div>
+                                    </div>
+                                </div>
+                                <div class="folder-actions">
+                                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editFolderModal"
+                                        data-id="<?php echo htmlspecialchars($row['folder_id']); ?>"
+                                        data-nama="<?php echo htmlspecialchars($row['nama_folder']); ?>"
+                                        data-deskripsi="<?php echo htmlspecialchars($row['deskripsi']); ?>">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#hapusFolderModal"
+                                        data-id="<?php echo htmlspecialchars($row['folder_id']); ?>"
+                                        data-nama="<?php echo htmlspecialchars($row['nama_folder']); ?>">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <?php
                         }
-                        ?>
-                    </tbody>
-                </table>
+                    } else {
+                        echo "<div class='no-folders'>Tidak ada folder.</div>";
+                    }
+                    ?>
+                </div>
             </main>
         </div>
     </div>
@@ -453,7 +616,100 @@ $result_folders = mysqli_query($koneksi, $sql_folders);
         </div>
     </div>
 
+    <!-- Modal Edit -->
+    <div class="modal fade" id="editFolderModal" tabindex="-1" aria-labelledby="editFolderModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editFolderModalLabel">Edit Folder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" id="editFolderForm">
+                        <div class="mb-3">
+                            <label for="edit_nama_folder" class="form-label">Nama Folder</label>
+                            <input type="text" class="form-control" name="nama_folder" id="edit_nama_folder" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_deskripsi" class="form-label">Deskripsi</label>
+                            <textarea class="form-control" name="deskripsi" id="edit_deskripsi"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div class="modal fade" id="hapusFolderModal" tabindex="-1" aria-labelledby="hapusFolderModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="hapusFolderModalLabel">Konfirmasi Hapus</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Apakah Anda yakin ingin menghapus folder "<span id="nama_folder_hapus"></span>"?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <a href="#" class="btn btn-danger" id="btn_hapus">Hapus</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tambahkan Modal untuk menampilkan file dalam folder -->
+    <div class="modal fade" id="folderFilesModal" tabindex="-1" aria-labelledby="folderFilesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="folderFilesModalLabel">Files in Folder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="filesList" class="files-grid">
+                        <!-- Files will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tambahkan Modal Preview File setelah folderFilesModal -->
+    <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-labelledby="filePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filePreviewModalLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="filePreviewContainer" class="text-center">
+                        <!-- Preview content will be loaded here -->
+                    </div>
+                    <div class="zoom-controls">
+                        <button type="button" id="zoomIn" title="Zoom In" onclick="handleZoom('in')">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                        <button type="button" id="zoomOut" title="Zoom Out" onclick="handleZoom('out')">
+                            <i class="bi bi-dash-lg"></i>
+                        </button>
+                        <button type="button" id="zoomReset" title="Reset Zoom" onclick="handleZoom('reset')">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                        <button type="button" id="downloadBtn" title="Download" class="download-btn">
+                            <i class="bi bi-download"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
 
     <script>
         // Auto-hide the alert message after 5 seconds
@@ -466,6 +722,166 @@ $result_folders = mysqli_query($koneksi, $sql_folders);
                 }, 500); // Waktu transisi opacity
             });
         }, 5000);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const editFolderModal = document.getElementById('editFolderModal');
+            editFolderModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const id = button.getAttribute('data-id');
+                const nama = button.getAttribute('data-nama');
+                const deskripsi = button.getAttribute('data-deskripsi');
+                
+                const modalForm = this.querySelector('#editFolderForm');
+                modalForm.action = `?action=edit&id=${id}`;
+                modalForm.querySelector('#edit_nama_folder').value = nama;
+                modalForm.querySelector('#edit_deskripsi').value = deskripsi;
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const hapusFolderModal = document.getElementById('hapusFolderModal');
+            hapusFolderModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const id = button.getAttribute('data-id');
+                const nama = button.getAttribute('data-nama');
+                
+                this.querySelector('#nama_folder_hapus').textContent = nama;
+                this.querySelector('#btn_hapus').href = `?action=hapus&id=${id}`;
+            });
+        });
+
+        function showFolderFiles(folderId, folderName) {
+            const modal = new bootstrap.Modal(document.getElementById('folderFilesModal'));
+            const modalTitle = document.getElementById('folderFilesModalLabel');
+            const filesList = document.getElementById('filesList');
+            
+            modalTitle.textContent = `Files in ${folderName}`;
+            filesList.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+            
+            fetch(`get_folder_files.php?folder_id=${folderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        filesList.innerHTML = '<div class="text-center">No files in this folder</div>';
+                        return;
+                    }
+
+                    filesList.innerHTML = data.map(file => `
+                        <div class="file-item">
+                            <div class="file-icon" onclick="showFilePreview('${file.file_path}', '${file.document_number}', ${file.is_image})">
+                                <i class="bi bi-file-earmark-text text-primary"></i>
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">${file.document_number}</div>
+                                <div class="file-type">${file.document_type}</div>
+                                <button class="btn btn-sm btn-primary mt-2" onclick="showFilePreview('${file.file_path}', '${file.document_number}', ${file.is_image})">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => {
+                    filesList.innerHTML = '<div class="text-center text-danger">Error loading files</div>';
+                    console.error('Error:', error);
+                });
+            
+            modal.show();
+        }
+
+        // Tambahkan fungsi untuk menampilkan preview file
+        function showFilePreview(filePath, fileName, isImage) {
+            const modal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
+            const modalTitle = document.getElementById('filePreviewModalLabel');
+            const previewContainer = document.getElementById('filePreviewContainer');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            modalTitle.textContent = fileName;
+            
+            // Setup download button
+            downloadBtn.onclick = () => {
+                const link = document.createElement('a');
+                link.href = filePath;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+            
+            if (isImage) {
+                previewContainer.innerHTML = `<img id="previewImage" src="${filePath}" alt="${fileName}" style="max-width: 100%; max-height: 70vh;">`;
+                
+                // Initialize panzoom after image loads
+                const img = previewContainer.querySelector('#previewImage');
+                img.onload = function() {
+                    if (window.panzoomInstance) {
+                        window.panzoomInstance.dispose();
+                    }
+                    
+                    window.panzoomInstance = panzoom(img, {
+                        maxZoom: 4,
+                        minZoom: 0.5,
+                        bounds: true,
+                        boundsPadding: 0.5,
+                        transformOrigin: {x: 0.5, y: 0.5}
+                    });
+                    
+                    // Reset zoom
+                    window.panzoomInstance.moveTo(0, 0);
+                    window.panzoomInstance.zoomAbs(0, 0, 1);
+                };
+                
+                // Show zoom controls and download button
+                document.querySelector('.zoom-controls').style.display = 'flex';
+            } else {
+                previewContainer.innerHTML = `
+                    <div class="text-center">
+                        <i class="bi bi-file-earmark-text display-1 text-primary"></i>
+                        <p class="mt-3">This file type cannot be previewed</p>
+                        <a href="${filePath}" class="btn btn-primary" target="_blank">Download File</a>
+                    </div>
+                `;
+                
+                // Hide zoom controls but keep download button
+                document.querySelector('.zoom-controls').style.display = 'none';
+            }
+            
+            modal.show();
+        }
+
+        function handleZoom(action) {
+            if (!window.panzoomInstance) return;
+            
+            const ZOOM_SPEED = 0.2;
+            const currentZoom = window.panzoomInstance.getTransform().scale;
+            
+            switch(action) {
+                case 'in':
+                    const newZoomIn = currentZoom + ZOOM_SPEED;
+                    if (newZoomIn <= 4) {
+                        window.panzoomInstance.zoomAbs(0, 0, newZoomIn);
+                    }
+                    break;
+                case 'out':
+                    const newZoomOut = currentZoom - ZOOM_SPEED;
+                    if (newZoomOut >= 0.5) {
+                        window.panzoomInstance.zoomAbs(0, 0, newZoomOut);
+                    }
+                    break;
+                case 'reset':
+                    window.panzoomInstance.moveTo(0, 0);
+                    window.panzoomInstance.zoomAbs(0, 0, 1);
+                    break;
+            }
+        }
+
+        // Cleanup panzoom when modal is closed
+        document.getElementById('filePreviewModal').addEventListener('hidden.bs.modal', function() {
+            if (window.panzoomInstance) {
+                window.panzoomInstance.dispose();
+                window.panzoomInstance = null;
+            }
+        });
     </script>
 
 </body>

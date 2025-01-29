@@ -5,40 +5,27 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] != 'admin') {
     exit();
 }
 
-include '../includes/db.php';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-$error_message = "";
-$success_message = "";
+include '../includes/db.php';
 
 // Menangani form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
-    $name = trim($_POST['name']);
-    $nik = trim($_POST['nik']);
-    $jabatan = trim($_POST['jabatan']);
-    $role = trim($_POST['role']);
+    $username = mysqli_real_escape_string($koneksi, $_POST['username']);
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $name = mysqli_real_escape_string($koneksi, $_POST['name']);
+    $nik = mysqli_real_escape_string($koneksi, $_POST['nik']);
+    $jabatan = mysqli_real_escape_string($koneksi, $_POST['jabatan']);
+    $role = mysqli_real_escape_string($koneksi, $_POST['role']);
 
     $error_message = "";
 
-    if (empty($username) || empty($password) || empty($name) || empty($nik) || empty($jabatan) || empty($role)) {
-        $error_message .= "Semua field harus diisi!<br>";
-    }
-
-    if (strlen($username) < 4) {
-        $error_message .= "Username minimal 4 karakter!<br>";
-    }
-
-    if (strlen($password) < 4) {
-        $error_message .= "Password minimal 4 karakter!<br>";
-    }
-
-    if (!ctype_digit($nik)) {
-        $error_message .= "NIK harus berupa angka!<br>";
-    }
-
-    if (strlen($nik) != 14) {
-        $error_message .= "NIK harus 14 digit!<br>";
+    // Validasi input
+    if (empty($username) || empty($_POST['password']) || empty($name) || empty($nik) || empty($jabatan) || empty($role)) {
+        $_SESSION['error_message'] = "Semua field harus diisi!";
+        header("Location: users.php");
+        exit();
     }
 
     // Cek apakah username sudah terdaftar
@@ -47,26 +34,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     mysqli_stmt_bind_param($check_username_stmt, "s", $username);
     mysqli_stmt_execute($check_username_stmt);
     mysqli_stmt_store_result($check_username_stmt);
+    
     if (mysqli_stmt_num_rows($check_username_stmt) > 0) {
-        $error_message .= "Username sudah terdaftar!<br>";
+        $_SESSION['error_message'] = "Username sudah terdaftar!";
+        header("Location: users.php");
+        exit();
     }
     mysqli_stmt_close($check_username_stmt);
 
-    // Jika tidak ada error, masukkan data ke database
-    if (empty($error_message)) {
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $insert_query = "INSERT INTO users (username, password, name, nik, jabatan, role) VALUES (?, ?, ?, ?, ?, ?)";
-        $insert_stmt = mysqli_prepare($koneksi, $insert_query);
-        mysqli_stmt_bind_param($insert_stmt, "ssssss", $username, $hashed_password, $name, $nik, $jabatan, $role);
-
-        if (mysqli_stmt_execute($insert_stmt)) {
-            $success_message = "User berhasil ditambahkan!";
+    // Insert data ke database
+    $query = "INSERT INTO users (username, password, name, nik, jabatan, role) VALUES (?, ?, ?, ?, ?, ?)";
+    $stmt = mysqli_prepare($koneksi, $query);
+    
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "ssssss", $username, $password, $name, $nik, $jabatan, $role);
+        
+        if (mysqli_stmt_execute($stmt)) {
+            $_SESSION['success_message'] = "User baru berhasil ditambahkan!";
         } else {
-            $error_message = "Terjadi kesalahan: " . mysqli_error($koneksi);
+            $_SESSION['error_message'] = "Gagal menambahkan user: " . mysqli_error($koneksi);
         }
-        mysqli_stmt_close($insert_stmt);
+        
+        mysqli_stmt_close($stmt);
+    } else {
+        $_SESSION['error_message'] = "Error dalam prepared statement: " . mysqli_error($koneksi);
     }
+    
+    header("Location: users.php");
+    exit();
 }
+
+// Jika bukan POST request, redirect ke users.php
+header("Location: users.php");
+exit();
 ?>
 <!DOCTYPE html>
 <html lang="id">

@@ -38,79 +38,26 @@ if (isset($_GET['id'])) {
 
     // Menangani form submission untuk update
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $username_post = trim($_POST['username']);
-        $name_post = trim($_POST['name']);
-        $nik_post = trim($_POST['nik']);
-        $jabatan_post = trim($_POST['jabatan']);
-        $role_post = trim($_POST['role']);
-        $old_password = trim($_POST['old_password']);
-        $new_password = trim($_POST['new_password']);
-        $confirm_password = trim($_POST['confirm_password']);
+        $id = $_GET['id'];
+        $username = mysqli_real_escape_string($koneksi, $_POST['username']);
+        $name = mysqli_real_escape_string($koneksi, $_POST['name']);
+        $nik = mysqli_real_escape_string($koneksi, $_POST['nik']);
+        $jabatan = mysqli_real_escape_string($koneksi, $_POST['jabatan']);
+        $role = mysqli_real_escape_string($koneksi, $_POST['role']);
 
-        // Validasi
-        if (empty($username_post) || empty($name_post) || empty($nik_post) || empty($jabatan_post) || empty($role_post)) {
-            $error_message .= "Semua field harus diisi!<br>";
-        }
-
-        if (!empty($new_password)) {
-            if (strlen($new_password) < 8) {
-                $error_message .= "Password baru minimal 8 karakter!<br>";
-            }
-            if ($new_password != $confirm_password) {
-                $error_message .= "Konfirmasi password baru tidak cocok!<br>";
-            }
-        }
-
-        // Cek password lama
-        if (!empty($old_password)) {
-            // Ambil password dari database untuk validasi
-            $stmt_check_password = mysqli_prepare($koneksi, "SELECT password FROM users WHERE id = ?");
-            mysqli_stmt_bind_param($stmt_check_password, "i", $id);
-            mysqli_stmt_execute($stmt_check_password);
-            mysqli_stmt_bind_result($stmt_check_password, $hashed_password);
-            mysqli_stmt_fetch($stmt_check_password);
-            mysqli_stmt_close($stmt_check_password);
-
-            if (!password_verify($old_password, $hashed_password)) {
-                $error_message .= "Password lama tidak cocok!<br>";
-            }
-        }
-
-        if (empty($error_message)) {
-            // Update query
-            $sql_update = "UPDATE users SET username=?, name=?, nik=?, jabatan=?, role=?";
-            $bind_types = "sssss";
-            $bind_params = array(&$username_post, &$name_post, &$nik_post, &$jabatan_post, &$role_post);
-
-            if (!empty($new_password)) {
-                // Hash password baru jika diubah
-                $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
-                $sql_update .= ", password=?";
-                $bind_types .= "s";
-                $bind_params[] = &$hashed_new_password;
-            }
-
-            // Tambahkan ID ke query update
-            $sql_update .= " WHERE id=?";
-            $bind_types .= "i";
-            $bind_params[] = &$id;
-
-            // Prepare and execute the statement
-            $stmt_update = mysqli_prepare($koneksi, $sql_update);
-            mysqli_stmt_bind_param($stmt_update, $bind_types, ...$bind_params);
-
-            if (mysqli_stmt_execute($stmt_update)) {
-                $success_message = "User berhasil diupdate!";
-                // Refresh data setelah update berhasil
-                $username = htmlspecialchars($username_post);
-                $name = htmlspecialchars($name_post);
-                $nik = htmlspecialchars($nik_post);
-                $jabatan = htmlspecialchars($jabatan_post);
-                $role = htmlspecialchars($role_post);
-            } else {
-                $error_message = "Error: " . mysqli_error($koneksi);
-            }
-            mysqli_stmt_close($stmt_update);
+        // Update user tanpa mengubah password
+        $query = "UPDATE users SET username=?, name=?, nik=?, jabatan=?, role=? WHERE id=?";
+        $stmt = mysqli_prepare($koneksi, $query);
+        mysqli_stmt_bind_param($stmt, "sssssi", $username, $name, $nik, $jabatan, $role, $id);
+        
+        if (mysqli_stmt_execute($stmt)) {
+            $_SESSION['success_message'] = "Data user berhasil diperbarui!";
+            header("Location: users.php");
+            exit();
+        } else {
+            $_SESSION['error_message'] = "Gagal memperbarui data user: " . mysqli_error($koneksi);
+            header("Location: users.php");
+            exit();
         }
     }
 } else {

@@ -278,103 +278,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST['search'])) {
 
             <!-- Main content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content">
-                <!-- Hasil Pencarian -->
+                <!-- Tambahkan setelah form pencarian -->
                 <?php if ($searchQuery): ?>
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h4>Hasil Pencarian untuk "<?php echo htmlspecialchars($searchQuery); ?>"</h4>
-                            
-                            <?php if (empty($searchResults['users']) && empty($searchResults['folders']) && empty($searchResults['files'])): ?>
-                                <div class="alert alert-info">Tidak ada hasil ditemukan.</div>
-                            <?php else: ?>
-                                <!-- Hasil Pencarian Users -->
-                                <?php if (!empty($searchResults['users'])): ?>
-                                    <div class="card mb-3">
-                                        <div class="card-header bg-primary text-white">
-                                            <h5 class="card-title mb-0">Users</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="list-group">
-                                                <?php foreach ($searchResults['users'] as $user): ?>
-                                                    <div class="list-group-item">
-                                                        <h6 class="mb-1"><?php echo htmlspecialchars($user['username']); ?></h6>
-                                                        <p class="mb-1">
-                                                            Role: <?php echo htmlspecialchars($user['role']); ?>
-                                                            <?php if(!empty($user['email'])): ?>
-                                                                <br>Email: <?php echo htmlspecialchars($user['email']); ?>
-                                                            <?php endif; ?>
-                                                        </p>
-                                                        <small>
-                                                            Dibuat: <?php echo htmlspecialchars($user['created_at']); ?>
-                                                            <?php if(isset($user['last_login'])): ?>
-                                                                <br>Login terakhir: <?php echo htmlspecialchars($user['last_login']); ?>
-                                                            <?php endif; ?>
-                                                        </small>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-
-                                <!-- Hasil Pencarian Folders -->
-                                <?php if (!empty($searchResults['folders'])): ?>
-                                    <div class="card mb-3">
-                                        <div class="card-header bg-success text-white">
-                                            <h5 class="card-title mb-0">Folders</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="list-group">
-                                                <?php foreach ($searchResults['folders'] as $folder): ?>
-                                                    <div class="list-group-item">
-                                                        <h6 class="mb-1"><?php echo htmlspecialchars($folder['folder_name']); ?></h6>
-                                                        <p class="mb-1">
-                                                            <?php if(!empty($folder['description'])): ?>
-                                                                Deskripsi: <?php echo htmlspecialchars($folder['description']); ?>
-                                                            <?php endif; ?>
-                                                        </p>
-                                                        <small>
-                                                            Dibuat oleh: <?php echo htmlspecialchars($folder['created_by']); ?><br>
-                                                            Tanggal: <?php echo htmlspecialchars($folder['created_at']); ?>
-                                                        </small>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-
-                                <!-- Hasil Pencarian Files -->
-                                <?php if (!empty($searchResults['files'])): ?>
-                                    <div class="card mb-3">
-                                        <div class="card-header bg-danger text-white">
-                                            <h5 class="card-title mb-0">Files</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="list-group">
-                                                <?php foreach ($searchResults['files'] as $file): ?>
-                                                    <div class="list-group-item">
-                                                        <h6 class="mb-1"><?php echo htmlspecialchars($file['document_number']); ?></h6>
-                                                        <p class="mb-1">
-                                                            Folder: <?php echo htmlspecialchars($file['folder_name']); ?><br>
-                                                            Tipe: <?php echo htmlspecialchars($file['document_type']); ?><br>
-                                                            Deskripsi: <?php echo htmlspecialchars($file['description']); ?>
-                                                        </p>
-                                                        <small>
-                                                            Tanggal Upload: <?php echo htmlspecialchars($file['upload_date']); ?>
-                                                            <?php if(isset($file['created_by'])): ?>
-                                                                <br>Upload oleh: <?php echo htmlspecialchars($file['created_by']); ?>
-                                                            <?php endif; ?>
-                                                        </small>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                    <script>
+                        // Trigger modal saat hasil pencarian ada
+                        window.onload = function() {
+                            var searchResultModal = new bootstrap.Modal(document.getElementById('searchResultModal'));
+                            searchResultModal.show();
+                        }
+                    </script>
                 <?php endif; ?>
 
                 <!-- Info Cards -->
@@ -498,5 +410,95 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST['search'])) {
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Tambahkan modal sebelum penutup body -->
+    <!-- Modal Hasil Pencarian -->
+    <div class="modal fade" id="searchResultModal" tabindex="-1" aria-labelledby="searchResultModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="searchResultModalLabel">
+                        Hasil Pencarian untuk "<?php echo htmlspecialchars($searchQuery); ?>"
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <?php if (empty($searchResults['users']) && empty($searchResults['folders']) && empty($searchResults['files'])): ?>
+                        <div class="alert alert-info">Tidak ada hasil ditemukan.</div>
+                    <?php else: ?>
+                        <!-- Hasil Pencarian Users -->
+                        <?php if (!empty($searchResults['users'])): ?>
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">Users</h6>
+                                </div>
+                                <div class="list-group list-group-flush">
+                                    <?php foreach ($searchResults['users'] as $user): ?>
+                                        <div class="list-group-item">
+                                            <h6 class="mb-1"><?php echo htmlspecialchars($user['username']); ?></h6>
+                                            <p class="mb-1">
+                                                Role: <?php echo htmlspecialchars($user['role']); ?><br>
+                                                Nama: <?php echo htmlspecialchars($user['name']); ?><br>
+                                                NIK: <?php echo htmlspecialchars($user['nik']); ?><br>
+                                                Jabatan: <?php echo htmlspecialchars($user['jabatan']); ?>
+                                            </p>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Hasil Pencarian Folders -->
+                        <?php if (!empty($searchResults['folders'])): ?>
+                            <div class="card mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">Folders</h6>
+                                </div>
+                                <div class="list-group list-group-flush">
+                                    <?php foreach ($searchResults['folders'] as $folder): ?>
+                                        <div class="list-group-item">
+                                            <h6 class="mb-1"><?php echo htmlspecialchars($folder['folder_name']); ?></h6>
+                                            <p class="mb-1">
+                                                <?php if(!empty($folder['description'])): ?>
+                                                    Deskripsi: <?php echo htmlspecialchars($folder['description']); ?><br>
+                                                <?php endif; ?>
+                                                Dibuat oleh: <?php echo htmlspecialchars($folder['created_by']); ?><br>
+                                                Tanggal: <?php echo htmlspecialchars($folder['created_at']); ?>
+                                            </p>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Hasil Pencarian Files -->
+                        <?php if (!empty($searchResults['files'])): ?>
+                            <div class="card mb-3">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">Files</h6>
+                                </div>
+                                <div class="list-group list-group-flush">
+                                    <?php foreach ($searchResults['files'] as $file): ?>
+                                        <div class="list-group-item">
+                                            <h6 class="mb-1"><?php echo htmlspecialchars($file['document_number']); ?></h6>
+                                            <p class="mb-1">
+                                                Folder: <?php echo htmlspecialchars($file['folder_name']); ?><br>
+                                                Tipe: <?php echo htmlspecialchars($file['document_type']); ?><br>
+                                                Deskripsi: <?php echo htmlspecialchars($file['description']); ?><br>
+                                                Tanggal Upload: <?php echo htmlspecialchars($file['upload_date']); ?>
+                                            </p>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
